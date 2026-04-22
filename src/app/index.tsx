@@ -1,98 +1,209 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Spacing } from '@/constants/theme';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+// Mock data type
+interface ScanItem {
+  id: string;
+  imageUri: string;
+  cropCoordinates: { x: number; y: number; width: number; height: number };
+  text: string;
+  timestamp: number;
 }
 
+// Mock data for demonstration
+const mockData: ScanItem[] = [
+  {
+    id: '1',
+    imageUri: 'https://picsum.photos/200/300',
+    cropCoordinates: { x: 10, y: 10, width: 180, height: 280 },
+    text: 'Sample scanned text 1',
+    timestamp: Date.now() - 100000,
+  },
+  {
+    id: '2',
+    imageUri: 'https://picsum.photos/200/301',
+    cropCoordinates: { x: 20, y: 20, width: 160, height: 260 },
+    text: 'Another scan result',
+    timestamp: Date.now() - 200000,
+  },
+  {
+    id: '3',
+    imageUri: 'https://picsum.photos/200/302',
+    cropCoordinates: { x: 5, y: 5, width: 190, height: 290 },
+    text: 'Third scanned document',
+    timestamp: Date.now() - 300000,
+  },
+];
+
 export default function HomeScreen() {
+  const router = useRouter();
+  const [searchText, setSearchText] = useState('');
+  const [items, setItems] = useState<ScanItem[]>(mockData);
+
+  const filteredItems = items.filter((item) =>
+    item.text.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const handleItemPress = (id: string) => {
+    router.push({ pathname: '/view/[id]', params: { id } });
+  };
+
+  const handleAddPress = () => {
+    router.push('/camera');
+  };
+
+  const renderItem = ({ item }: { item: ScanItem }) => (
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => handleItemPress(item.id)}
+      activeOpacity={0.7}>
+      <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
+      <View style={styles.itemInfo}>
+        <Text style={styles.itemCoordinates}>
+          Crop: ({item.cropCoordinates.x}, {item.cropCoordinates.y}) - 
+          {item.cropCoordinates.width}x{item.cropCoordinates.height}
+        </Text>
+        <Text style={styles.itemText} numberOfLines={2}>
+          {item.text}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Text Scanner</Text>
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => router.push('/settings')}>
+          <Text style={styles.iconText}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Filter scans..."
+          placeholderTextColor="#8E8E93"
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
+          <Text style={styles.addIconText}>+</Text>
+        </TouchableOpacity>
+      </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <FlatList
+        data={filteredItems}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#F2F2F7',
+  },
+  header: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    paddingVertical: Spacing.one,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
   },
-  heroSection: {
-    alignItems: 'center',
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  settingsButton: {
+    padding: Spacing.half,
+  },
+  iconText: {
+    fontSize: 24,
+  },
+  addIconText: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: '300',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.one,
+    backgroundColor: '#F2F2F7',
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingHorizontal: Spacing.four,
+    fontSize: 17,
+    color: '#000000',
+    marginRight: Spacing.one,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#007AFF',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    padding: Spacing.four,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: Spacing.one,
+    marginBottom: Spacing.one,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#E5E5EA',
+  },
+  itemInfo: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    marginLeft: Spacing.one,
+    justifyContent: 'center',
   },
-  title: {
-    textAlign: 'center',
+  itemCoordinates: {
+    fontSize: 12,
+    color: '#8E8E93',
+    marginBottom: 4,
   },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  itemText: {
+    fontSize: 15,
+    color: '#000000',
   },
 });
