@@ -1,16 +1,19 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Directory, File, Paths } from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
+import { useLocalStorage } from '@/data/localStorage';
 
 export default function CameraScreen() {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraReady, setIsCameraReady] = useState(false);
   const cameraRef = useRef<CameraView>(null);
+  const {addItem} = useLocalStorage();
 
   if (!permission) {
     return (
@@ -39,23 +42,27 @@ export default function CameraScreen() {
   const handleCapture = async () => {
     if (cameraRef.current) {
       try {
+        await cameraRef.current.pausePreview();
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 1,
+          quality: 0.9,
           skipProcessing: false,
         });
         
         if (photo) {
-          // In a real app, you would save this and navigate to a preview/edit screen
-          Alert.alert(
-            'Photo Captured',
-            `Photo saved to: ${photo.uri}`,
-            [
-              {
-                text: 'OK',
-                onPress: () => router.back(),
-              },
-            ]
-          );
+          // 1. Create a permanent file path
+          const fileName = `photo_${Date.now()}.jpg`;
+          const dir = new Directory(Paths.document);
+
+          // 2. Move the file to the new location
+          const sourceFile = new File(photo.uri);
+          const destinationFile = new File(dir, fileName);
+          sourceFile.move(destinationFile);
+
+          // 3. Store in your app state
+          const item = addItem(destinationFile.uri);
+
+          // 4. Navigate to view screen
+          router.replace(`/view/${item.id}`);
         }
       } catch (error) {
         console.error('Failed to take picture:', error);

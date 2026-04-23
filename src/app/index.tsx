@@ -1,4 +1,5 @@
 import { Spacing } from '@/constants/theme';
+import { ScanItem, useLocalStorage } from '@/data/localStorage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -12,46 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Mock data type
-interface ScanItem {
-  id: string;
-  imageUri: string;
-  cropCoordinates: { x: number; y: number; width: number; height: number };
-  text: string;
-  timestamp: number;
-}
-
-// Mock data for demonstration
-const mockData: ScanItem[] = [
-  {
-    id: '1',
-    imageUri: 'https://picsum.photos/200/300',
-    cropCoordinates: { x: 10, y: 10, width: 180, height: 280 },
-    text: 'Sample scanned text 1',
-    timestamp: Date.now() - 100000,
-  },
-  {
-    id: '2',
-    imageUri: 'https://picsum.photos/200/301',
-    cropCoordinates: { x: 20, y: 20, width: 160, height: 260 },
-    text: 'Another scan result',
-    timestamp: Date.now() - 200000,
-  },
-  {
-    id: '3',
-    imageUri: 'https://picsum.photos/200/302',
-    cropCoordinates: { x: 5, y: 5, width: 190, height: 290 },
-    text: 'Third scanned document',
-    timestamp: Date.now() - 300000,
-  },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
   const [searchText, setSearchText] = useState('');
-  const [items, setItems] = useState<ScanItem[]>(mockData);
+  const {data} = useLocalStorage();
 
-  const filteredItems = items.filter((item) =>
+  const filteredItems = data.items.filter((item) =>
     item.text.toLowerCase().includes(searchText.toLowerCase())
   );
 

@@ -3,38 +3,14 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
-
-// Mock data - in a real app, this would come from a store or API
-const mockData: Record<string, {
-  id: string;
-  imageUri: string;
-  cropCoordinates: { x: number; y: number; width: number; height: number };
-  text: string;
-}> = {
-  '1': {
-    id: '1',
-    imageUri: 'https://picsum.photos/200/300',
-    cropCoordinates: { x: 10, y: 10, width: 180, height: 280 },
-    text: 'Sample scanned text 1 - This is the extracted text from the image.',
-  },
-  '2': {
-    id: '2',
-    imageUri: 'https://picsum.photos/200/301',
-    cropCoordinates: { x: 20, y: 20, width: 160, height: 260 },
-    text: 'Another scan result - More text extracted from this image.',
-  },
-  '3': {
-    id: '3',
-    imageUri: 'https://picsum.photos/200/302',
-    cropCoordinates: { x: 5, y: 5, width: 190, height: 290 },
-    text: 'Third scanned document - Additional text content here.',
-  },
-};
+import { useLocalStorage } from '@/data/localStorage';
 
 export default function ViewScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const item = mockData[id || '1'];
+  const {data} = useLocalStorage();
+
+  const item = data.items.find((i) => i.id === id);
 
   if (!item) {
     return (
