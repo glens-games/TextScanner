@@ -20,7 +20,13 @@ export default function ViewScreen() {
       setScanning(true);
       const result = await ExpoMlkitOcr.recognizeText(item.imageUri);
 
-      setItemText(item.id, result.text);
+      // const formattedText = result.blocks.map((block, blockIndex) => {
+      //   const lines = block.lines.map(line => line.text).join('\n');
+      //   return `[Block ${blockIndex}]\n${lines}`;
+      // }).join('\n\n');
+      const formattedText = result.blocks.map(block => block.lines.map(line => line.text).join('\n')).join('\n\n');
+
+      setItemText(item.id, formattedText);
     } catch (err) {
       console.error('OCR failed:', err);
     } finally {

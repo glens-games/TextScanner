@@ -4,7 +4,7 @@ This app helps you quickly scan text from an image on your mobile phone or from 
 
 ### Debugging
 
-To start the app locally: `npx expo start`
+To connect to the published app locally: `npx expo start --dev-client`
 
 ### Tasks
 

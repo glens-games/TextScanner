@@ -1,4 +1,7 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+
+const STORAGE_KEY = 'IMAGE_TO_NOTES_APPDATA_V1';
 
 export type Options = {
   darkMode: boolean;
@@ -27,15 +30,7 @@ export type AppData = {
 
 const defaultData: AppData = {
   options: {darkMode: false},
-  items: [] = [
-    {
-      id: '1',
-      imageUri: 'https://picsum.photos/200/300',
-      cropCoordinates: { x: 10, y: 10, width: 180, height: 280 },
-      text: 'Sample scanned text 1',
-      createdAt: Date.now() - 100000,
-    },
-  ],
+  items: [],
 };
 
 // Context
@@ -80,7 +75,33 @@ export const LocalStorageProvider: React.FC<{children: React.ReactNode}> = ({chi
         [data]
     );
 
-  return (
+
+    useEffect(() => {
+        const loadStorage = async () => {
+            try {
+                const storedData = await AsyncStorage.getItem(STORAGE_KEY);
+                if (storedData) {
+                    setData(JSON.parse(storedData));
+                }
+            } catch (error) {
+                console.error('Error loading storage:', error);
+            }
+        };
+        loadStorage();
+    }, []);
+
+    useEffect(() => {
+        const saveStorage = async () => {
+            try {
+                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (error) {
+                console.error('Error saving storage:', error);
+            }
+        };
+        saveStorage();
+    }, [data]);
+
+    return (
         <LocalStorageContext.Provider value={value}>
             {children}
         </LocalStorageContext.Provider>
