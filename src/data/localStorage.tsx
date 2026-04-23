@@ -44,7 +44,7 @@ type LocalStorageContextType = {
     setData: (data: AppData) => void;
     setOptions: (opts: Partial<Options>) => void;
     addItem: (imageUri: string) => ScanItem;
-    updateItem: (id: string, updates: Partial<ScanItem>) => void;
+    setItemText: (id: string, text: string) => void;
 };
 
 const LocalStorageContext = createContext<LocalStorageContextType | undefined>(undefined);
@@ -68,15 +68,15 @@ export const LocalStorageProvider: React.FC<{children: React.ReactNode}> = ({chi
         return newItem;
     };
 
-    const updateItem = (id: string, updates: Partial<ScanItem>) => {
+    const setItemText = (id: string, text: string) => {
         setData(prev => ({
             ...prev,
-            items: prev.items.map(item => item.id === id ? {...item, ...updates} : item)
+            items: prev.items.map(item => item.id === id ? {...item, text} : item)
         }));
     };
 
     const value = useMemo(
-        () => ({data, setData, setOptions, addItem, updateItem}),
+        () => ({data, setData, setOptions, addItem, setItemText}),
         [data]
     );
 

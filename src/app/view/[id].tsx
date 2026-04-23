@@ -1,4 +1,6 @@
+import ExpoMlkitOcr from 'expo-mlkit-ocr';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,7 +10,23 @@ import { useLocalStorage } from '@/data/localStorage';
 export default function ViewScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const {data} = useLocalStorage();
+  const {data, setItemText} = useLocalStorage();
+  const [scanning, setScanning] = useState(false);
+
+  const handleScan = async () => {
+    if (!item?.imageUri) return;
+
+    try {
+      setScanning(true);
+      const result = await ExpoMlkitOcr.recognizeText(item.imageUri);
+
+      setItemText(item.id, result.text);
+    } catch (err) {
+      console.error('OCR failed:', err);
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const item = data.items.find((i) => i.id === id);
 
@@ -41,7 +59,13 @@ export default function ViewScreen() {
             resizeMode="contain"
           />
         </View>
-        
+
+        <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
+          <Text style={styles.scanButtonText}>
+            {scanning ? 'Scanning...' : 'Scan Text'}
+          </Text>
+        </TouchableOpacity>
+
         <View style={styles.textContainer}>
           <Text style={styles.coordinatesText}>
             Crop: ({item.cropCoordinates.x}, {item.cropCoordinates.y}) - 
@@ -118,5 +142,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
     lineHeight: 24,
+  },
+  scanButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: Spacing.two,
+  },
+  scanButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    textAlign: 'center',
   },
 });
